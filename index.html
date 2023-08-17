@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+  <title>FrontEnd ISTE</title>
+</head>
+<body>
+  <div class="container mt-4 shadow-lg p-3 mb-5 bg-body rounded">
+    <form id="postForm" class="mb-3">
+   
+      <center><h4>PRODUCTOS</h4></center>
+      <div class="mb-3">
+        <label for="productName" class="form-label">Nombre</label>
+        <input type="text" class="form-control" id="productName" required>
+      </div>
+      <div class="mb-3">
+        <label for="productDescription" class="form-label">Descripcion</label>
+        <input type="text" class="form-control" id="productDescription" required>
+      </div>
+      <div class="mb-3">
+        <label for="productPrice" class="form-label">Precio</label>
+        <input type="number" class="form-control" id="productPrice" required>
+      </div>
+      <div class="mb-3">
+        <label for="productStock" class="form-label">Stock</label>
+        <input type="number" class="form-control" id="productStock" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Agregar Producto</button>
+    </form>
+
+    <div class="mb-3">
+        <label for="searchKeyword" class="form-label">Buscar Productos</label>
+        <input type="text" class="form-control" id="searchKeyword">
+        <button type="button" class="btn btn-primary mt-2" id="searchButton">Buscar</button>
+        <button type="button" class="btn btn-secondary mt-2" id="resetButton">Mostrar Todos los Productos</button>
+      </div>
+
+    <table class="table table-bordered table-striped">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Descripcion</th>
+          <th>Precio</th>
+          <th>Stock</th>
+          <th>Opciones</th>
+        </tr>
+      </thead>
+      <tbody id="data">
+      
+
+      </tbody>
+    </table>
+  </div>
+
+  
+  <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="updateModalLabel">Update Product</h5>
+          <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="updateProductId">
+          <div class="mb-3">
+            <label for="updateProductName" class="form-label">Name</label>
+            <input type="text" class="form-control" id="updateProductName" required>
+          </div>
+          <div class="mb-3">
+            <label for="updateProductDescription" class="form-label">Description</label>
+            <input type="text" class="form-control" id="updateProductDescription" required>
+          </div>
+          <div class="mb-3">
+            <label for="updateProductPrice" class="form-label">Price</label>
+            <input type="number" class="form-control" id="updateProductPrice" required>
+          </div>
+          <div class="mb-3">
+            <label for="updateProductStock" class="form-label">Stock</label>
+            <input type="number" class="form-control" id="updateProductStock" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="updateProductBtn">Update</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js" integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf" crossorigin="anonymous"></script>
+  <script>
+    let url = 'http://localhost:3000/productos'; //URL local del backend
+
+    // Funccion fetch para consumir las apis 
+    const fetchData = () => {
+      fetch(url)
+        .then(response => response.json())
+        .then(data => mostrarData(data))
+        .catch(error => console.log(error));
+    }
+
+    const mostrarData = (data) => {
+      let body = "";
+      for (var i = 0; i < data.length; i++) {
+        body += `
+          <tr>
+            <td>${data[i].nombre}</td>
+            <td>${data[i].descripcion}</td>
+            <td>${data[i].precio}</td>
+            <td>${data[i].cantidad_stock}</td>
+            <td>
+              <button class="btn btn-danger delete-btn" data-id="${data[i].id}">Delete</button>
+              <button class="btn btn-warning update-btn" data-id="${data[i].id}" data-toggle="modal" data-target="#updateModal">Update</button>
+
+            </td>
+          </tr>`;
+      }
+      document.getElementById('data').innerHTML = body;
+    }
+
+    fetchData();
+
+    // llamada del form superior 
+    const postForm = document.getElementById('postForm');
+    postForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      const productName = document.getElementById('productName').value;
+      const productDescription = document.getElementById('productDescription').value;
+      const productPrice = parseFloat(document.getElementById('productPrice').value);
+      const productStock = parseInt(document.getElementById('productStock').value);
+
+      const newProduct = {
+        nombre: productName,
+        descripcion: productDescription,
+        precio: productPrice,
+        cantidad_stock: productStock
+      };
+
+      // Metodo POST
+      fetch(url, {
+        method: 'POST',
+       headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newProduct)
+      })
+        .then(response => response.json())
+        .then(() => {
+          // refrescar campos
+          document.getElementById('productName').value = '';
+          document.getElementById('productDescription').value = '';
+          document.getElementById('productPrice').value = '';
+          document.getElementById('productStock').value = '';
+          fetchData(); // Refrescar tabla
+        })
+        .catch(error => console.error('Error al añadir producto:', error));
+    });
+
+    //*******************************************************************************************************
+    const getProductById = async (productId) => {
+    const response = await fetch(`${url}/${productId}`);
+    const product = await response.json();
+    return product;
+  };
+
+    document.addEventListener('click', (event) => {
+    if (event.target.classList.contains('update-btn')) {
+      const productId = event.target.getAttribute('data-id');
+      openUpdateModal(productId);
+    }
+  });
+
+    const openUpdateModal = (productId) => {
+      const product = getProductById(productId); 
+      document.getElementById('updateProductId').value = productId;
+      document.getElementById('updateProductName').value = product.nombre;
+      document.getElementById('updateProductDescription').value = product.descripcion;
+      document.getElementById('updateProductPrice').value = product.precio;
+      document.getElementById('updateProductStock').value = product.cantidad_stock;
+
+     // $('#updateModal').modal('show');
+    };
+
+    
+    const updateProductBtn = document.getElementById('updateProductBtn');
+    updateProductBtn.addEventListener('click', () => {
+      const productId = document.getElementById('updateProductId').value;
+      const updatedProduct = {
+        nombre: document.getElementById('updateProductName').value,
+        descripcion: document.getElementById('updateProductDescription').value,
+        precio: parseFloat(document.getElementById('updateProductPrice').value),
+        cantidad_stock: parseInt(document.getElementById('updateProductStock').value)
+      };
+
+      updateProduct(productId, updatedProduct); 
+      $('#updateModal').modal('hide');
+    });
+
+    //*****************************************************************************************
+
+   document.addEventListener('click', (event) => {
+      if (event.target.classList.contains('delete-btn')) {
+        // Handle delete button click
+        const productId = event.target.getAttribute('data-id');
+        deleteProduct(productId);
+      } else if (event.target.classList.contains('update-btn')) {
+        // Handle update button click
+        const productId = event.target.getAttribute('data-id');
+        // Implement your update logic here
+        console.log('Update clicked for product ID:', productId);
+      }
+    });
+
+    // DELETE productos
+    const deleteProduct = (productId) => {
+      if (confirm('Esta seguro de eliminar este producto?')) {
+        // Perform DELETE request
+        fetch(`${url}/${productId}`, {
+          method: 'DELETE'
+        })
+          .then(response => response.json())
+          .then(() => {
+            fetchData(); 
+          })
+          .catch(error => console.error('Error deleting product:', error));
+      }
+    };
+
+    // **********************************************************
+    //Buscar Productos
+  const searchProductsByName = (nombre) => {
+    fetch(`${url}/${nombre}`)
+      .then(response => response.json())
+      .then(data => mostrarData(data))
+      .catch(error => console.log(error));
+  };
+
+  const searchButton = document.getElementById('searchButton');
+  searchButton.addEventListener('click', () => {
+    const searchKeyword = document.getElementById('searchKeyword').value;
+    if (searchKeyword.trim() !== '') {
+      searchProductsByName(searchKeyword);
+    }
+  });
+
+  const showAllProducts = () => {
+    fetchData();
+    document.getElementById('searchKeyword').value = ''; // Clear the search input
+  };
+ // Resetear busqueda
+  const resetButton = document.getElementById('resetButton');
+  resetButton.addEventListener('click', showAllProducts);
+  </script>
+</body>
+</html>
